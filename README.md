@@ -1,32 +1,76 @@
-# React + TypeScript + Vite
+# Préstamos Lab — 0902-23-10299
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Aplicación web para controlar qué equipo del laboratorio de cómputo está prestado, a quién y hasta cuándo. Hecha con React + TypeScript (Vite) y una API REST simulada con json-server.
 
-Currently, two official plugins are available:
+**Variante asignada (carné terminado en 9):**
+- Categorías: Switch, Cable de red, Access Point
+- Máximo de días de préstamo: 4
+- Regla adicional: la tabla de préstamos activos se ordena por fecha límite, el más próximo primero
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Requisitos
 
-## React Compiler
+- Node.js 18 o superior
+- npm
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Instalación
 
-## Expanding the Oxlint configuration
+1. Clonar el repositorio e ingresar a la carpeta:
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+   ```bash
+   git clone https://github.com/RigoDwightCac/prestamos-lab.git
+   cd prestamos-lab
+   ```
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+2. Instalar las dependencias:
+
+   ```bash
+   npm install
+   ```
+
+3. Crear un archivo `.env` en la raíz del proyecto (junto a `package.json`) con la URL de la API:
+
+   ```
+   VITE_API_URL=http://localhost:3001
+   ```
+
+## Levantar la API (json-server)
+
+En una terminal:
+
+```bash
+npm run api
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+La API queda disponible en `http://localhost:3001` y guarda sus datos en `db.json`.
+
+Endpoints usados:
+
+| Método | Endpoint | Uso |
+|---|---|---|
+| GET | /equipos | Cargar el inventario |
+| GET | /prestamos?devuelto=false | Cargar préstamos activos |
+| POST | /prestamos | Registrar un préstamo |
+| PATCH | /equipos/:id | Cambiar disponibilidad |
+| PATCH | /prestamos/:id | Marcar como devuelto |
+
+## Ejecutar el frontend
+
+En **otra** terminal:
+
+```bash
+npm run dev
+```
+
+Abrir en el navegador la dirección que indica la terminal (normalmente `http://localhost:5173`).
+
+## Estructura del proyecto
+
+```
+src/
+  components/   componentes de presentación
+  hooks/        custom hooks (useEquipos, usePrestamos)
+  pages/        vistas principales
+  services/     funciones que llaman a la API
+  types/        interfaces TypeScript
+  App.tsx
+```
