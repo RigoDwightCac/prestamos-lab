@@ -1,8 +1,8 @@
 import { useState } from "react";
 import "./App.css";
-import { equiposPrueba } from "./data/equiposPrueba";
 import { TITULO_APP } from "./config";
-import type { Equipo, Prestamo } from "./types";
+import type { Prestamo, Equipo } from "./types";
+import { useEquipos } from "./hooks/useEquipos";
 import Encabezado from "./components/Encabezado";
 import ListaEquipos from "./components/ListaEquipos";
 import Filtros from "./components/Filtros";
@@ -13,14 +13,13 @@ import PrestamosActivos from "./pages/PrestamosActivos";
 type Vista = "inventario" | "prestamos";
 
 export default function App() {
-  const [equipos, setEquipos] = useState<Equipo[]>(equiposPrueba);
+  const { equipos, setEquipos, cargando, error, reintentar } = useEquipos();
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
   const [equipoSeleccionado, setEquipoSeleccionado] = useState<Equipo | null>(null);
   const [vista, setVista] = useState<Vista>("inventario");
   const [categoria, setCategoria] = useState("");
   const [busqueda, setBusqueda] = useState("");
 
-  // Estado derivado: se calcula en cada render, no se guarda aparte
   const categorias = [...new Set(equipos.map((e) => e.categoria))];
 
   const equiposFiltrados = equipos.filter(
@@ -70,6 +69,45 @@ export default function App() {
     );
   };
 
+  const contenidoInventario = () => {
+    if (cargando) {
+      return (
+        <div className="estado">
+          <div className="spinner" />
+          <p>Cargando inventario...</p>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="mensaje-error">
+          <p>{error}</p>
+          <button className="btn" onClick={reintentar}>
+            Reintentar
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <Filtros
+          categorias={categorias}
+          categoria={categoria}
+          busqueda={busqueda}
+          onCategoria={setCategoria}
+          onBusqueda={setBusqueda}
+        />
+        {equiposFiltrados.length === 0 ? (
+          <p className="vacio">No se encontraron equipos.</p>
+        ) : (
+          <ListaEquipos equipos={equiposFiltrados} onPrestar={manejarPrestar} />
+        )}
+      </>
+    );
+  };
+
   return (
     <>
       <Encabezado titulo={TITULO_APP} equipos={equipos} />
@@ -90,20 +128,7 @@ export default function App() {
         </nav>
 
         {vista === "inventario" ? (
-          <>
-            <Filtros
-              categorias={categorias}
-              categoria={categoria}
-              busqueda={busqueda}
-              onCategoria={setCategoria}
-              onBusqueda={setBusqueda}
-            />
-            {equiposFiltrados.length === 0 ? (
-              <p className="vacio">No se encontraron equipos.</p>
-            ) : (
-              <ListaEquipos equipos={equiposFiltrados} onPrestar={manejarPrestar} />
-            )}
-          </>
+          contenidoInventario()
         ) : (
           <PrestamosActivos
             prestamos={prestamos}
