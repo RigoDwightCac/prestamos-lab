@@ -13,7 +13,7 @@ export interface DatosPrestamo {
 
 interface FormularioPrestamoProps {
   equipo: Equipo;
-  onGuardar: (datos: DatosPrestamo) => void;
+  onGuardar: (datos: DatosPrestamo) => Promise<void>;
   onCancelar: () => void;
 }
 
@@ -24,7 +24,6 @@ interface Errores {
 }
 
 // Formatea una fecha como AAAA-MM-DD usando la hora local
-// (toISOString usaría UTC y en Guatemala, de noche, daría el día siguiente)
 function aTexto(fecha: Date): string {
   const anio = fecha.getFullYear();
   const mes = String(fecha.getMonth() + 1).padStart(2, "0");
@@ -43,6 +42,8 @@ export default function FormularioPrestamo({
     fechaLimite: "",
   });
   const [errores, setErrores] = useState<Errores>({});
+  const [enviando, setEnviando] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
 
   const hoy = aTexto(new Date());
   const limite = new Date();
@@ -78,18 +79,27 @@ export default function FormularioPrestamo({
     return e;
   };
 
-  const manejarEnvio = (ev: FormEvent<HTMLFormElement>) => {
+  const manejarEnvio = async (ev: FormEvent<HTMLFormElement>) => {
     ev.preventDefault();
+    if (enviando) return;
+
     const nuevosErrores = validar();
     setErrores(nuevosErrores);
+    if (Object.keys(nuevosErrores).length > 0) return;
 
-    if (Object.keys(nuevosErrores).length === 0) {
-      onGuardar({
+    setEnviando(true);
+    setErrorEnvio(null);
+    try {
+      await onGuardar({
         solicitante: datos.solicitante.trim(),
         carne: datos.carne,
         fechaLimite: datos.fechaLimite,
       });
+    } catch {
+      setErrorEnvio("No se pudo registrar el préstamo. Intente de nuevo.");
+      setEnviando(false);
     }
+    // Si todo sale bien, App cierra el formulario y este componente se desmonta
   };
 
   return (
@@ -135,12 +145,19 @@ export default function FormularioPrestamo({
           {errores.fechaLimite && <span className="error">{errores.fechaLimite}</span>}
         </label>
 
+        {errorEnvio && <span className="error">{errorEnvio}</span>}
+
         <div className="modal-botones">
-          <button type="button" className="btn btn-secundario" onClick={onCancelar}>
+          <button
+            type="button"
+            className="btn btn-secundario"
+            onClick={onCancelar}
+            disabled={enviando}
+          >
             Cancelar
           </button>
-          <button type="submit" className="btn">
-            Guardar
+          <button type="submit" className="btn" disabled={enviando}>
+            {enviando ? "Guardando..." : "Guardar"}
           </button>
         </div>
       </form>
